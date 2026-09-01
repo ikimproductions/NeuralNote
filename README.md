@@ -1,3 +1,22 @@
+# NeuralNote+ (Isaac's fork)
+
+This is a personal fork of [DamRsn/NeuralNote](https://github.com/DamRsn/NeuralNote) that ships as **NeuralNote+**
+(`/Applications/NeuralNote+.app`, plus `NeuralNote+` AU/VST3) so it can live next to the official build.
+
+What the fork adds:
+
+- **`.m4a` / AAC / ALAC / `.caf` / `.mp4` input** via Apple's CoreAudio decoder (Media Foundation on Windows), so
+  Voice Memos and Bloom Memo recordings load directly. The file picker and error messages list the real supported formats.
+- **Drag & drop of *promised* files on macOS.** Voice Memos, Bloom Memo, Photos, Mail, etc. don't put a file path on the
+  drag pasteboard, they put a file promise; stock NeuralNote shows the "not allowed" cursor for those. The fork receives
+  the promised file into a temp folder and loads it (`NeuralNote/Source/MacFilePromiseDrop.mm`).
+- `scripts/install.sh` — build, run the fork's tests and install to `/Applications`.
+- `scripts/sync-upstream.sh [--rebuild]` — merge the latest upstream into `main` and push to this fork.
+
+Remotes: `origin` = `ikimproductions/NeuralNote` (this fork), `upstream` = `DamRsn/NeuralNote`.
+
+---
+
 # NeuralNote <img style="float: right;" src="NeuralNote/Assets/logo.png" width="100" />
 
 NeuralNote is the audio plugin that brings **state-of-the-art Audio to MIDI conversion** into

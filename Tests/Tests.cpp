@@ -7,6 +7,7 @@
 #include "cnn_test.h"
 #include "perf_test.h"
 #include "notes_test.h"
+#include "audio_file_test.h"
 
 int main()
 {
@@ -23,6 +24,9 @@ int main()
 
     std::cout << std::endl << "NOTES TEST" << std::endl;
     result |= !notes_test();
+
+    std::cout << std::endl << "AUDIO FILE TEST" << std::endl;
+    result |= !audio_file_test();
 
     return result;
 }

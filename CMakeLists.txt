@@ -41,7 +41,7 @@ juce_add_plugin("${BaseTargetName}"
         ICON_BIG "${CMAKE_CURRENT_LIST_DIR}/NeuralNote/Assets/logo.png"
         ICON_SMALL "${CMAKE_CURRENT_LIST_DIR}/NeuralNote/Assets/logo.png"
         COMPANY_NAME "Dr. Audio"
-        BUNDLE_ID "com.draudio.neuralnote"
+        BUNDLE_ID "com.ikimproductions.neuralnoteplus"
         IS_SYNTH FALSE
         NEEDS_MIDI_INPUT FALSE
         NEEDS_MIDI_OUTPUT TRUE
@@ -52,9 +52,9 @@ juce_add_plugin("${BaseTargetName}"
         MICROPHONE_PERMISSION_TEXT "Need access to Microphone"
         HARDENED_RUNTIME_ENABLED TRUE
         PLUGIN_MANUFACTURER_CODE DrAu
-        PLUGIN_CODE NRNT
+        PLUGIN_CODE NrNi
         FORMATS AU VST3 Standalone
-        PRODUCT_NAME "NeuralNote")
+        PRODUCT_NAME "NeuralNote+")
 
 juce_generate_juce_header(${BaseTargetName})
 
@@ -63,6 +63,15 @@ file(GLOB_RECURSE SOURCES_PLUGIN ${CMAKE_CURRENT_LIST_DIR}/NeuralNote/*.cpp ${CM
 list(REMOVE_ITEM SOURCES_PLUGIN ${CMAKE_CURRENT_LIST_DIR}/Lib/Model/BasicPitchCNN.cpp)
 file(GLOB_RECURSE HEADERS_PLUGIN ${CMAKE_CURRENT_LIST_DIR}/NeuralNote/*.h ${CMAKE_CURRENT_LIST_DIR}/Lib/*.h)
 list(REMOVE_ITEM HEADERS_PLUGIN ${CMAKE_CURRENT_LIST_DIR}/Lib/Model/BasicPitchCNN.h)
+
+# [ai] macOS-only Objective-C++ sources (file-promise drag & drop support for
+# drops coming from Voice Memos / Bloom Memo, which hand over promised files
+# rather than real paths). Kept out of the *.cpp glob so other platforms
+# never see them.
+if (APPLE)
+    file(GLOB_RECURSE SOURCES_PLUGIN_MAC ${CMAKE_CURRENT_LIST_DIR}/NeuralNote/*.mm)
+    list(APPEND SOURCES_PLUGIN ${SOURCES_PLUGIN_MAC})
+endif ()
 
 target_sources(${BaseTargetName} PRIVATE ${SOURCES_PLUGIN} ${HEADERS_PLUGIN})
 
@@ -149,6 +158,12 @@ target_link_libraries(${BaseTargetName}
         bin_data
         PUBLIC
         juce_recommended_config_flags)
+
+if (APPLE)
+    # [ai] UTType (macOS 11+) is used to map promised-file UTIs to extensions;
+    # weak-linked so the 10.11 deployment target still loads without it.
+    target_link_libraries(${BaseTargetName} PRIVATE "-weak_framework UniformTypeIdentifiers" "-framework CoreServices")
+endif ()
 
 if (${LTO})
     target_link_libraries(${BaseTargetName} PUBLIC juce_recommended_lto_flags)

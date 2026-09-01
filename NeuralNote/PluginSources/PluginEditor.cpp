@@ -1,5 +1,6 @@
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
+#include "MacFilePromiseDrop.h"
 
 NeuralNoteEditor::NeuralNoteEditor(NeuralNoteAudioProcessor& p)
     : AudioProcessorEditor(&p)
@@ -26,4 +27,12 @@ void NeuralNoteEditor::paint(juce::Graphics& g)
 void NeuralNoteEditor::resized()
 {
     mMainView->setBounds(getLocalBounds());
+}
+
+void NeuralNoteEditor::parentHierarchyChanged()
+{
+    // [ai] Called once the editor sits inside a native window (standalone or
+    // host). That is the earliest moment the native view exists, which the
+    // macOS file-promise drop support needs to hook into.
+    MacFilePromiseDrop::install(*this);
 }

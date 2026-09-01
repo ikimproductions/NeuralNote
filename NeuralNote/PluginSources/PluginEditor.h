@@ -15,6 +15,8 @@ public:
 
     void resized() override;
 
+    void parentHierarchyChanged() override;
+
     NeuralNoteMainView* getMainView() const { return mMainView.get(); }
 
 private:

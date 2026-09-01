@@ -19,7 +19,8 @@ namespace AudioUtils
 {
 
 /**
- * Load an audio file. wav, aiff, flac, ogg vorbis and mp3 files are supported.
+ * Load an audio file. wav, aiff, flac, ogg vorbis and mp3 files are supported everywhere;
+ * m4a/aac/mp4/caf are supported through the OS decoder on macOS (CoreAudio) and Windows (Media Foundation).
  * @param inFile Audio file to load.
  * @param outBuffer Buffer where to load audio data. Will be resized to correct number of channels and samples.
  * @param outSampleRate Will be set to audio file sample rate.
@@ -33,6 +34,16 @@ bool loadAudioFile(const juce::File& inFile, AudioBuffer<float>& outBuffer, doub
  * @return StringArray containing all suported file extensions
  */
 StringArray getSupportedAudioFileExtensions();
+
+/**
+ * @brief Whether a filename has one of the supported audio file extensions (case-insensitive).
+ */
+bool isAudioFileExtensionSupported(const String& inFilename);
+
+/**
+ * @brief Wildcard pattern for juce::FileChooser built from the supported extensions (e.g. "*.wav;*.m4a").
+ */
+String getFileChooserWildcardPattern();
 
 /**
  * Create an AudioFormatManager with all supported audio formats registered. 
