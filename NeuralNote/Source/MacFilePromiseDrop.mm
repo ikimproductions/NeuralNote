@@ -15,6 +15,7 @@
 #endif
 
 #include "MacFilePromiseDrop.h"
+#include "AudioUtils.h"
 
 #if JUCE_MAC
 
@@ -104,24 +105,49 @@ juce::String extensionForUTI(NSString* uti)
 // is hovering, so it can light up (or not) based on the extension. Prefer the
 // promised file name, fall back to a placeholder carrying the promised type's
 // extension.
+// [ai] A single drag can promise several flavours at once (Bloom Memo
+// advertises its private "memo ids" type next to the .m4a export), and the
+// UI only ever looks at files[0] — so names with a supported audio extension
+// are listed first.
 juce::StringArray placeholderNames(NSArray<NSFilePromiseReceiver*>* receivers)
 {
-    juce::StringArray names;
+    juce::StringArray supported, others;
+
+    auto addName = [&](const juce::String& name) {
+        (AudioUtils::isAudioFileExtensionSupported(name) ? supported : others).addIfNotAlreadyThere(name);
+    };
 
     for (NSFilePromiseReceiver* receiver in receivers) {
-        if (receiver.fileNames.count > 0) {
-            for (NSString* name in receiver.fileNames)
-                names.add(toJuceString(name));
-            continue;
-        }
+        juce::StringArray extensions;
 
         for (NSString* uti in receiver.fileTypes) {
             auto ext = extensionForUTI(uti);
-            names.add(ext.isEmpty() ? juce::String("promised-file") : "promised-file." + ext);
+
+            if (ext.isNotEmpty())
+                extensions.addIfNotAlreadyThere(ext);
+        }
+
+        for (NSString* name in receiver.fileNames) {
+            auto juceName = toJuceString(name);
+            addName(juceName);
+
+            // A promised name without a usable extension still gets one per promised type.
+            if (! AudioUtils::isAudioFileExtensionSupported(juceName))
+                for (const auto& ext: extensions)
+                    addName(juceName + "." + ext);
+        }
+
+        if (receiver.fileNames.count == 0) {
+            for (const auto& ext: extensions)
+                addName("promised-file." + ext);
+
+            if (extensions.isEmpty())
+                addName("promised-file");
         }
     }
 
-    return names;
+    supported.addArray(others);
+    return supported;
 }
 
 juce::Point<int> dropPosition(id view, id<NSDraggingInfo> sender, juce::ComponentPeer& peer)
@@ -246,10 +272,14 @@ BOOL swizzledPerformDragOperation(id self, SEL sel, id<NSDraggingInfo> sender)
                                                      return;
                                                  }
 
-                                                 if (fired->exchange(true))
+                                                 juce::String path = toJuceString(fileURL.path);
+
+                                                 // Skip non-audio flavours (e.g. a private sidecar type) and only fire once.
+                                                 if (! AudioUtils::isAudioFileExtensionSupported(path))
                                                      return;
 
-                                                 juce::String path = toJuceString(fileURL.path);
+                                                 if (fired->exchange(true))
+                                                     return;
 
                                                  juce::MessageManager::callAsync([editor, position, path]() {
                                                      if (editor == nullptr)
