@@ -45,9 +45,12 @@ dest="/Applications/NeuralNote+.app"
 [ -d "$app" ] || { echo "error: $app not found" >&2; exit 1; }
 
 # Don't clobber a running copy.
-if pgrep -xq "NeuralNote+"; then
+# (the "+" must be escaped: pgrep patterns are regexes)
+if pgrep -xq 'NeuralNote\+'; then
     echo "NeuralNote+ is running — quitting it before install."
-    osascript -e 'tell application "NeuralNote+" to quit' >/dev/null 2>&1 || pkill -x "NeuralNote+" || true
+    osascript -e 'tell application "NeuralNote+" to quit' >/dev/null 2>&1 || true
+    for _ in 1 2 3 4 5; do pgrep -xq 'NeuralNote\+' || break; sleep 1; done
+    pkill -x 'NeuralNote\+' 2>/dev/null || true
     sleep 1
 fi
 
