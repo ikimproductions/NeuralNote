@@ -154,7 +154,19 @@ NSDragOperation swizzledDraggingMove(id self, SEL sel, id<NSDraggingInfo> sender
                 info.files = placeholderNames(receivers);
                 info.position = dropPosition(self, sender, *peer);
 
-                return peer->handleDragMove(info) ? NSDragOperationCopy : NSDragOperationNone;
+                if (! peer->handleDragMove(info))
+                    return NSDragOperationNone;
+
+                // Pick an operation the source app allows, or the drop is refused.
+                const auto allowed = [sender draggingSourceOperationMask];
+
+                if (allowed & NSDragOperationCopy)
+                    return NSDragOperationCopy;
+
+                if (allowed & NSDragOperationGeneric)
+                    return NSDragOperationGeneric;
+
+                return allowed;
             }
         }
     }
